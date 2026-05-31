@@ -7,23 +7,39 @@ export const getCategory = async (req, res) => {
     const { page = 1 } = req.query
 
     const url = type ? `/${category}/${type}/page/${page}` : `/${category}/page/${page}`
+    console.log(`Fetching category: ${category}, type: ${type || 'none'}, page: ${page}`);
+    console.log(`URL: ${url}`);
+
     const response = await client.get(url);
+    console.log(`Response status: ${response.status}`);
     const $ = cheerio.load(response.data);
 
     const data = []
 
     $('.items article').each(function() {
-      data.push({
-        id: $(this).find('a').attr('href').split('es/').pop().replace('/', ''),
-        img: $(this).find('img').attr('data-src'),
-        title: $(this).find('.data h3 a').text().trim(),
-        isUncensored: $(this).find('.buttonuncensured').length > 0,
-        year: Number($(this).find('.buttonyear span').text().trim())
-      })
+      const href = $(this).find('a').attr('href');
+      const id = href?.split('es/').pop()?.replace('/', '') || '';
+      const img = $(this).find('img').attr('data-src') || '';
+      const title = $(this).find('.data h3 a').text().trim() || 'Unknown';
+      const yearText = $(this).find('.buttonyear span').text().trim();
+      const year = yearText ? Number(yearText) : null;
+
+      if (id) {
+        data.push({
+          id,
+          img,
+          title,
+          isUncensored: $(this).find('.buttonuncensured').length > 0,
+          year
+        })
+      }
     })
 
+    console.log(`Found ${data.length} items in category`);
     return res.status(200).send(data)
   } catch (error) {
+    console.error('Error in getCategory:', error.message);
+    console.error('Error stack:', error.stack);
     return res.status(500).json({ message: error.message })
   }
 }
