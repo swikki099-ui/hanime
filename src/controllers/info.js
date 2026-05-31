@@ -6,7 +6,14 @@ export const getInfo = async (req, res) => {
     const { id } = req.params
     console.log(`Fetching info for series ID: ${id}`);
 
-    const response = await client.get(`/series/${id}`);
+    // Try different URL patterns
+    let response;
+    try {
+      response = await client.get(`/series/${id}`);
+    } catch (error) {
+      console.log(`Trying alternative URL pattern for series: ${id}`);
+      response = await client.get(`/${id}`);
+    }
     console.log(`Response status: ${response.status}`);
     const $ = cheerio.load(response.data)
 
