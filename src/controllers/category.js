@@ -6,7 +6,14 @@ export const getCategory = async (req, res) => {
     const { category, type } = req.params
     const { page = 1 } = req.query
 
-    const url = type ? `/${category}/${type}/page/${page}` : `/${category}/page/${page}`
+    // Try different URL patterns for categories
+    let url;
+    if (type) {
+      url = `/genre/${category}/${type}/page/${page}`;
+    } else {
+      url = `/genre/${category}/page/${page}`;
+    }
+    
     console.log(`Fetching category: ${category}, type: ${type || 'none'}, page: ${page}`);
     console.log(`URL: ${url}`);
 
@@ -16,7 +23,10 @@ export const getCategory = async (req, res) => {
 
     const data = []
 
-    $('.items article').each(function() {
+    // Try different selectors
+    const items = $('.items article').length > 0 ? $('.items article') : $('.result-item');
+    
+    items.each(function() {
       const href = $(this).find('a').attr('href');
       const id = href?.split('es/').pop()?.replace('/', '') || '';
       const img = $(this).find('img').attr('data-src') || '';
