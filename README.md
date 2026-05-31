@@ -19,7 +19,7 @@ A Node.js Express API that scrapes anime content from watchhentai.net. This API 
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
+git clone https://github.com/swikki099-ui/hanime
 cd hanime-main
 ```
 
