@@ -4,16 +4,45 @@ import * as cheerio from 'cheerio'
 export const getInfo = async (req, res) => {
   try {
     const { id } = req.params
-    console.log(`Fetching info for series ID: ${id}`);
+    console.log(`Fetching info for ID: ${id}`);
 
     // Try different URL patterns
     let response;
+    let seriesId = id;
+    
     try {
+      // First try as series ID
       response = await client.get(`/series/${id}`);
     } catch (error) {
-      console.log(`Trying alternative URL pattern for series: ${id}`);
-      response = await client.get(`/${id}`);
+      console.error(`Error fetching with /series/${id}:`, error.message);
+      
+      // If that fails, try as episode ID and extract series ID
+      console.log(`Trying as episode ID: ${id}`);
+      try {
+        const episodeResponse = await client.get(`/videos/${id}`);
+        const $ = cheerio.load(episodeResponse.data);
+        seriesId = $(".poster > a")
+          .attr("href")
+          ?.split("es/")
+          ?.pop()
+          ?.replace("/", "") || id;
+        console.log(`Extracted series ID: ${seriesId}`);
+        
+        // Now fetch series info with the extracted series ID
+        response = await client.get(`/series/${seriesId}`);
+      } catch (episodeError) {
+        console.error(`Error fetching episode page:`, episodeError.message);
+        
+        // Try alternative URL pattern
+        try {
+          response = await client.get(`/${id}`);
+        } catch (altError) {
+          console.error(`All URL patterns failed for ID: ${id}`);
+          throw altError;
+        }
+      }
     }
+    
     console.log(`Response status: ${response.status}`);
     const $ = cheerio.load(response.data)
 
