@@ -4,8 +4,10 @@ import * as cheerio from 'cheerio'
 export const getInfo = async (req, res) => {
   try {
     const { id } = req.params
+    console.log(`Fetching info for series ID: ${id}`);
 
     const response = await client.get(`/series/${id}`);
+    console.log(`Response status: ${response.status}`);
     const $ = cheerio.load(response.data)
 
     const data = {
@@ -29,24 +31,31 @@ export const getInfo = async (req, res) => {
     }
 
     const selector = $('#single .content.right')
+    if (selector.length === 0) {
+      console.error('Selector #single .content.right not found');
+      return res.status(404).json({ message: 'Series not found' });
+    }
 
-    data.title = $(selector).find('.sheader .data h1').text().trim()
-    data.img = $(selector).find('img').attr('data-src')
+    data.title = $(selector).find('.sheader .data h1').text().trim() || 'Unknown'
+    data.img = $(selector).find('img').attr('data-src') || ''
     data.isUncensored = $(selector).find('.buttonuncensured').length > 0
-    data.aired = $(selector).find('.extra .date').text().trim()
+    data.aired = $(selector).find('.extra .date').text().trim() || ''
     $(selector).find('.data .sgeneros a').each(function() {
-      data.genres.push($(this).attr('href').split('re/').pop().replace('/', ''))
+      const genre = $(this).attr('href')?.split('re/').pop()?.replace('/', '') || ''
+      if (genre) data.genres.push(genre)
     })
-    data.synopsis = $(selector).find('.sbox .wp-content > p').text().trim()
+    data.synopsis = $(selector).find('.sbox .wp-content > p').text().trim() || ''
     $(selector).find('.wp-tags > li > a').each(function() {
-      data.tags.push($(this).attr('href').split('tag/').pop().replace('/', ''))
+      const tag = $(this).attr('href')?.split('tag/').pop()?.replace('/', '') || ''
+      if (tag) data.tags.push(tag)
     })
     $(selector).find('#dt_galery img').each(function() {
-      data.images.push($(this).attr("data-src").trim())
+      const img = $(this).attr("data-src")?.trim()
+      if (img) data.images.push(img)
     })
 
     $(selector).find('.custom_fields .variante').each(function() {
-      const fields = $(this).text()
+      const fields = $(this).text().trim()
 
       switch(fields) {
         case 'Alternative title':
@@ -75,13 +84,16 @@ export const getInfo = async (req, res) => {
 
         case 'Studio':
           $(this).next().find('a').each(function() {
-            data.about.studios.push($(this).attr('href').split('studio/').pop().replace('/', ''))
+            const studio = $(this).attr('href')?.split('studio/').pop()?.replace('/', '') || ''
+            if (studio) data.about.studios.push(studio)
           })
       }
     })
 
     return res.status(200).send(data)
   } catch (error) {
+    console.error('Error in getInfo:', error.message);
+    console.error('Error stack:', error.stack);
     return res.status(500).json({ message: error.message })
   }
 }
