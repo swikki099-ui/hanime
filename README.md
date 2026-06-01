@@ -5,6 +5,7 @@ A Node.js Express API that scrapes anime content from watchhentai.net. This API 
 ## Features
 
 - Get spotlight/featured anime content
+- Browse trending anime
 - Browse recent episodes
 - Search anime by title
 - Get detailed information about anime series
@@ -19,7 +20,7 @@ A Node.js Express API that scrapes anime content from watchhentai.net. This API 
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/swikki099-ui/hanime
+git clone <repository-url>
 cd hanime-main
 ```
 
@@ -70,6 +71,32 @@ curl /spotlight
 
 ---
 
+### GET /trending
+Get trending anime content.
+
+**Query Parameters:**
+- `page` (optional, default: 1) - Page number for pagination
+
+**Response:**
+```json
+[
+  {
+    "id": "string",
+    "img": "string",
+    "title": "string",
+    "isUncensored": boolean,
+    "year": number
+  }
+]
+```
+
+**Example:**
+```bash
+curl /trending?page=1
+```
+
+---
+
 ### GET /recent-episodes
 Get the most recently uploaded episodes.
 
@@ -104,6 +131,8 @@ Browse anime by category.
 **URL Parameters:**
 - `category` (required) - Category name (e.g., "hentai", "3d", etc.)
 - `type` (optional) - Sub-type within the category
+
+**Note:** This endpoint uses the `/genre/` URL pattern on the target website.
 
 **Query Parameters:**
 - `page` (optional, default: 1) - Page number for pagination
@@ -160,7 +189,9 @@ curl /search?s=keyword&page=1
 Get detailed information about a specific anime series.
 
 **URL Parameters:**
-- `id` (required) - Series ID
+- `id` (required) - Series ID or Episode ID (endpoint automatically handles both)
+
+**Note:** If an episode ID is provided, the endpoint will extract the series ID from the episode page and fetch the series information.
 
 **Response:**
 ```json
@@ -196,7 +227,9 @@ curl /info/series-id
 Get the list of episodes for a specific anime series.
 
 **URL Parameters:**
-- `id` (required) - Series ID
+- `id` (required) - Series ID or Episode ID (endpoint automatically handles both)
+
+**Note:** If an episode ID is provided, the endpoint will extract the series ID from the episode page and fetch the episodes list.
 
 **Response:**
 ```json
@@ -221,7 +254,9 @@ curl /episodes/series-id
 Get related anime recommendations for a specific series.
 
 **URL Parameters:**
-- `id` (required) - Series ID
+- `id` (required) - Series ID or Episode ID (endpoint automatically handles both)
+
+**Note:** If an episode ID is provided, the endpoint will extract the series ID from the episode page and fetch related content.
 
 **Response:**
 ```json
@@ -331,7 +366,8 @@ hanime-main/
 │   │   ├── related.js
 │   │   ├── search.js
 │   │   ├── source.js
-│   │   └── spotlight.js
+│   │   ├── spotlight.js
+│   │   └── trending.js
 │   ├── proxy/            # Proxy endpoints
 │   │   └── mp4Proxy.js
 │   ├── routers/          # Route definitions
@@ -359,6 +395,15 @@ Common HTTP status codes:
 - `404` - Not Found
 - `500` - Internal Server Error
 
+## Recent Updates
+
+- Added `/trending` endpoint for browsing trending anime
+- Updated `/info`, `/episodes`, and `/related` endpoints to automatically handle both series IDs and episode IDs
+- Updated `/category` endpoint to use correct URL pattern (`/genre/`)
+- Added browser-like headers (User-Agent, Accept, Referer) to avoid being blocked by the target website
+- Enhanced error logging across all controllers for better debugging
+- Added defensive coding with optional chaining to handle missing elements gracefully
+
 ## Notes
 
 - This API scrapes content from watchhentai.net
@@ -367,6 +412,7 @@ Common HTTP status codes:
 - The API includes proper Referer headers for video requests
 - Video streaming supports range requests for better playback performance
 - All IDs are extracted from URLs and cleaned of path separators
+- The `/info`, `/episodes`, and `/related` endpoints automatically handle both series IDs and episode IDs by extracting the series ID from episode pages when needed
 
 ## License
 
